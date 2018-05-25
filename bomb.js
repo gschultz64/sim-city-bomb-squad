@@ -4,6 +4,7 @@ var startingTime = 30;
 var remainingTime = 0;
 var gameOver = false;
 var wiresToCut = [];
+var successSong = null;
 
 var delay = null;
 var timer = null;
@@ -25,14 +26,21 @@ var endGame = function(win) {
   clearInterval(timer);
   gameOver = true;
   // activate reset button
+  document.getElementsByTagName("button")[0].disabled = false;
   if (win) {
     // we won!!!
     console.log("You saved the city!");
     document.getElementsByClassName("timerbox")[0].classList.add("green");
     document.getElementsByClassName("timerbox")[0].classList.remove("red");
+    var yay = document.getElementById('yay');
+    yay.addEventListener("ended", function() {
+      successSong.play();
+    });
+    yay.play();
   } else {
     // we lost :(
     console.log("BOOM!");
+    document.getElementById("explode").play();
     document.body.classList.remove("unexploded");
     document.body.classList.add("exploded");
   }
@@ -40,6 +48,7 @@ var endGame = function(win) {
 
 var cutWire = function() {
   if (!wiresCut[this.id] && !gameOver) {
+    document.getElementById("buzz").play();
     // Do the wire cutting and game checking here
     this.src = "img/cut-" + this.id + "-wire.png";
     wiresCut[this.id] = true;
@@ -71,6 +80,8 @@ var updateClock = function() {
 }
 
 var initGame = function() {
+  // This line empties the wiresToCut array
+  wiresToCut.length = 0;
   remainingTime = startingTime;
   for (let wire in wiresCut) {
     var rand = Math.random();
@@ -79,7 +90,35 @@ var initGame = function() {
     }
   }
   console.log(wiresToCut);
+  document.getElementsByTagName("button")[0].disabled = true;
+  document.getElementById("siren").play();
   timer = setInterval(updateClock, 1000);
+}
+
+var reset = function() {
+  gameOver = false;
+  var wireImages = document.getElementsByClassName("wirebox")[0].children;
+  for (let i = 0; i < wireImages.length; i++) {
+    wireImages[i].src = "img/uncut-" + wireImages[i].id + "-wire.png";
+  }
+  // Reset background
+  document.body.classList.remove("exploded");
+  document.body.classList.add("unexploded");
+  // Reset timer color
+  document.getElementsByClassName("timerbox")[0].classList.remove("green");
+  document.getElementsByClassName("timerbox")[0].classList.add("red");
+
+  clearTimeout(delay);
+  clearInterval(timer);
+
+  successSong.pause();
+  successSong.currentTime = 0;
+
+  for (let wire in wiresCut) {
+    wiresCut[wire] = false;
+  }
+
+  initGame();
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -87,6 +126,8 @@ document.addEventListener("DOMContentLoaded", function() {
   for (let wire in wiresCut) {
     document.getElementById(wire).addEventListener("click", cutWire);
   }
+  document.getElementsByTagName("button")[0].addEventListener("click", reset);
+  successSong = document.getElementById('success');
   initGame();
 });
 
