@@ -6,7 +6,7 @@ var gameOver = false;
 var wiresToCut = [];
 
 var delay = null;
-
+var timer = null;
 
 var wiresCut = {
   blue: false,
@@ -14,6 +14,28 @@ var wiresCut = {
   red: false,
   white: false,
   yellow: false
+}
+
+var checkForWin = function() {
+  return wiresToCut.length > 0 ? false : true;
+}
+
+var endGame = function(win) {
+  clearTimeout(delay);
+  clearInterval(timer);
+  gameOver = true;
+  // activate reset button
+  if (win) {
+    // we won!!!
+    console.log("You saved the city!");
+    document.getElementsByClassName("timerbox")[0].classList.add("green");
+    document.getElementsByClassName("timerbox")[0].classList.remove("red");
+  } else {
+    // we lost :(
+    console.log("BOOM!");
+    document.body.classList.remove("unexploded");
+    document.body.classList.add("exploded");
+  }
 }
 
 var cutWire = function() {
@@ -28,14 +50,36 @@ var cutWire = function() {
       console.log(this.id + " was correct!");
       wiresToCut.splice(wireIndex, 1);
       if (checkForWin()) {
-        endGame();
+        endGame(true);
       }
     } else {
       // this is where the bad cut logic goes
       console.log(this.id + " was incorrect!");
-      
+      delay = setTimeout(function() {
+        endGame(false);
+      }, 750);
     }
   } 
+}
+
+var updateClock = function() {
+  remainingTime--;
+  if (remainingTime <= 0) {
+    endGame(false);
+  }
+  document.querySelector(".timerbox p").textContent = "0.00:" + remainingTime;
+}
+
+var initGame = function() {
+  remainingTime = startingTime;
+  for (let wire in wiresCut) {
+    var rand = Math.random();
+    if (rand > 0.5) {
+      wiresToCut.push(wire);
+    }
+  }
+  console.log(wiresToCut);
+  timer = setInterval(updateClock, 1000);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -43,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function() {
   for (let wire in wiresCut) {
     document.getElementById(wire).addEventListener("click", cutWire);
   }
-  
+  initGame();
 });
 
 
